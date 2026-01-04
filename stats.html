@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      background: white;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .stats-window {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      -webkit-app-region: drag;
+      cursor: move;
+    }
+
+    .stats-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .close-btn {
+      -webkit-app-region: no-drag;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .close-btn:hover {
+      color: #1f2937;
+      background: #f3f4f6;
+    }
+
+    .stats-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-item i {
+      font-size: 24px;
+      color: #667eea;
+      width: 32px;
+      text-align: center;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+  </style>
+</head>
+<body>
+  <div class="stats-window">
+    <div class="stats-header">
+      <h2 id="statsTitle">Session Statistics</h2>
+      <button class="close-btn" id="closeBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="stats-body">
+      <div class="stat-item">
+        <i class="fas fa-calendar-day"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label1">Sessions</div>
+          <div class="stat-value" id="value1">0</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-clock"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label2">Total Focus Time</div>
+          <div class="stat-value" id="value2">0h 0m</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-chart-line"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label3">Average Focus Time</div>
+          <div class="stat-value" id="value3">0h 0m</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label4">Procrastination Alerts</div>
+          <div class="stat-value" id="value4">0 alerts</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-pause-circle"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label5">Pause Time</div>
+          <div class="stat-value" id="value5">0h 0m</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-percentage"></i>
+        <div class="stat-info">
+          <div class="stat-label" id="label6">Focus Efficiency</div>
+          <div class="stat-value" id="value6">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Get stats data from process argv
+    const statsDataStr = process.argv.find(arg => arg.startsWith('{'));
+    const statsData = statsDataStr ? JSON.parse(statsDataStr) : {};
+
+    // Update UI with stats data
+    if (statsData.title) {
+      document.getElementById('statsTitle').textContent = statsData.title;
+    }
+
+    for (let i = 1; i <= 6; i++) {
+      if (statsData[`label${i}`]) {
+        document.getElementById(`label${i}`).textContent = statsData[`label${i}`];
+      }
+      if (statsData[`value${i}`]) {
+        document.getElementById(`value${i}`).textContent = statsData[`value${i}`];
+      }
+    }
+
+    // Close button
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      ipcRenderer.send('close-stats-window');
+    });
+  </script>
+</body>
+</html>

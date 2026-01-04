@@ -1,0 +1,28 @@
+{
+  "name": "focus-pocus",
+  "version": "1.1.0",
+  "description": "Customized productivity timer with activity detection",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "keywords": ["productivity", "timer", "pomodoro"],
+  "author": "",
+  "license": "MIT",
+  "build": {
+    "appId": "com.focuspocus.app",
+    "productName": "Focus Pocus",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "active-win": "^8.1.0"
+  }
+}

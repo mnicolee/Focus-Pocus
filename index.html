@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Pocus</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div id="app" class="draggable">
+    <div class="header">
+      <div class="drag-area">
+        <span class="app-title">Focus Pocus</span>
+        <span class="app-version">(Version 1.1)</span>
+      </div>
+      <button class="minimize-btn" id="minimizeBtn">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="close-btn" id="closeBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="content">
+      <div class="settings-section">
+        <label for="inactivityThreshold" class="setting-label">
+          Inactivity Threshold (mins):
+        </label>
+        <input type="number" id="inactivityThreshold" class="setting-input" value="10" min="1" max="60">
+      </div>
+
+      <div class="timer-display">
+        <div class="time" id="timerDisplay">00:00:00</div>
+        <div class="status" id="statusText">Ready to start</div>
+        <div class="alert-countdown" id="alertCountdown">Time to Alert: --:--</div>
+      </div>
+
+      <div class="controls">
+        <button class="control-btn start-btn" id="startBtn" title="Start">
+          <span class="btn-text">START</span>
+        </button>
+        <button class="control-btn pause-btn" id="pauseBtn" title="Pause" disabled>
+          <span class="btn-text">PAUSE</span>
+        </button>
+        <button class="control-btn play-btn" id="playBtn" title="Play" disabled>
+          <span class="btn-text">PLAY</span>
+        </button>
+        <button class="control-btn stop-btn" id="stopBtn" title="Stop" disabled>
+          <span class="btn-text">STOP</span>
+        </button>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-header-text">Statistics</div>
+        <div class="stats-buttons">
+          <button class="stats-btn daily-stats-btn" id="dailyStatsBtn" title="Daily Statistics">
+            <span class="stats-btn-text">Daily</span>
+          </button>
+          <button class="stats-btn weekly-stats-btn" id="weeklyStatsBtn" title="Weekly Statistics">
+            <span class="stats-btn-text">Weekly</span>
+          </button>
+          <button class="stats-btn monthly-stats-btn" id="monthlyStatsBtn" title="Monthly Statistics">
+            <span class="stats-btn-text">Monthly</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="kill-all-section">
+        <button class="kill-all-btn" id="killAllBtn" title="Delete today's statistics" disabled>
+          <span class="kill-all-text">All-Kill</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Modal -->
+  <div id="statsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="statsModalTitle">Session Statistics</h2>
+        <button class="close-modal" id="closeModal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="statsModalBody">
+        <div class="stat-item">
+          <i class="fas fa-calendar-day"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel1">Sessions</div>
+            <div class="stat-value" id="statValue1">0</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-clock"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel2">Total Focus Time</div>
+            <div class="stat-value" id="statValue2">0h 0m</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-chart-line"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel3">Average Focus Time</div>
+            <div class="stat-value" id="statValue3">0h 0m</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel4">Procrastination Alerts</div>
+            <div class="stat-value" id="statValue4">0 alerts</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-pause-circle"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel5">Pause Time</div>
+            <div class="stat-value" id="statValue5">0h 0m</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-percentage"></i>
+          <div class="stat-info">
+            <div class="stat-label" id="statLabel6">Focus Efficiency</div>
+            <div class="stat-value" id="statValue6">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Modal -->
+  <div id="alertModal" class="alert-modal">
+    <div class="alert-content">
+      <i class="fas fa-bell alert-icon"></i>
+      <div class="alert-text" id="alertText">Time to focus!</div>
+      <button class="alert-dismiss" id="dismissAlert">Got it</button>
+    </div>
+  </div>
+
+  <!-- Session Selection Modal -->
+  <div id="sessionSelectModal" class="modal">
+    <div class="modal-content session-select-content">
+      <div class="modal-header">
+        <h2>Select Sessions to Delete</h2>
+        <button class="close-modal" id="closeSessionSelect">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="sessionSelectBody">
+        <!-- Sessions will be dynamically inserted here -->
+      </div>
+      <div class="session-select-footer">
+        <button class="session-select-btn session-cancel-btn" id="sessionCancelBtn">Cancel</button>
+        <button class="session-select-btn session-continue-btn" id="sessionContinueBtn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kill-all Confirmation Modal -->
+  <div id="killAllModal" class="alert-modal">
+    <div class="alert-content kill-confirm-content">
+      <i class="fas fa-exclamation-triangle alert-icon" style="color: #ff3333;"></i>
+      <div class="alert-text">Warning! You are about to wipe out today's stats! Are you sure?</div>
+      <div class="kill-confirm-buttons">
+        <button class="kill-confirm-btn kill-yes-btn" id="killYesBtn">Yes</button>
+        <button class="kill-confirm-btn kill-no-btn" id="killNoBtn">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
