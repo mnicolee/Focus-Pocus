@@ -282,7 +282,10 @@ function showAlert(message, type = 'inactivity', beepCount = 1) {
 // Load and display sessions for selection
 function loadSessionSelectionModal() {
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
   const logFile = path.join(logsDir, `${dateStr}.json`);
 
   if (!fs.existsSync(logFile)) {
@@ -328,7 +331,7 @@ function loadSessionSelectionModal() {
 
     const details = document.createElement('div');
     details.className = 'session-details';
-    details.textContent = `Focus Time: ${formatDuration(session.focusTime)} | Procrastination: ${session.procrastinationCount} alerts | Pauses: ${session.pauseCount}`;
+    details.textContent = `Focus Time: ${formatDuration(session.focusTime)} | Procrastination: ${session.procrastinationCount} alerts | Pause Time: ${formatDuration(session.pauseTime)} (${session.pauseCount} pauses)`;
 
     sessionInfo.appendChild(label);
     sessionInfo.appendChild(details);
@@ -353,7 +356,10 @@ function loadSessionSelectionModal() {
 // Save session log
 function saveSessionLog(sessionData) {
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
   const logFile = path.join(logsDir, `${dateStr}.json`);
 
   let logs = [];
@@ -404,7 +410,10 @@ function readLogsForRange(start, end) {
   const current = new Date(start);
 
   while (current <= end) {
-    const dateStr = current.toISOString().split('T')[0];
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, '0');
+    const day = String(current.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
     const logFile = path.join(logsDir, `${dateStr}.json`);
 
     if (fs.existsSync(logFile)) {
@@ -437,8 +446,9 @@ function calculateCumulativeStats(sessions) {
   const totalPauseTime = sessions.reduce((sum, s) => sum + s.pauseTime, 0);
   const totalProcrastination = sessions.reduce((sum, s) => sum + s.procrastinationCount, 0);
   const totalPauseCount = sessions.reduce((sum, s) => sum + s.pauseCount, 0);
-  const totalTime = totalFocusTime + totalPauseTime;
-  const efficiency = totalTime > 0 ? Math.round((totalFocusTime / totalTime) * 100) : 0;
+  const totalProcrastTime = totalProcrastination * ALERT_INTERVAL;
+  const productiveTime = totalFocusTime + totalProcrastTime;
+  const efficiency = productiveTime > 0 ? Math.round((totalFocusTime / productiveTime) * 100) : 0;
 
   return {
     sessionCount: sessions.length,
@@ -555,13 +565,16 @@ stopBtn.addEventListener('click', () => {
   clearInterval(timerInterval);
   clearInterval(activityCheckInterval);
 
+  const now = Date.now();
+
   // Calculate final stats
   if (state.isPaused) {
-    const pauseDuration = Date.now() - state.pauseStartTime;
+    const pauseDuration = now - state.pauseStartTime;
     state.totalPauseTime += pauseDuration;
   }
 
-  state.totalFocusTime = state.elapsedTime;
+  // Recalculate final focus time with current timestamp for accuracy
+  state.totalFocusTime = now - state.startTime - state.totalPauseTime;
 
   // Save session to log
   saveSessionLog({
@@ -599,8 +612,8 @@ monthlyStatsBtn.addEventListener('click', () => {
 // Show current session statistics (after stop)
 function showCurrentSessionStats() {
   const procrastTime = state.procrastinationCount * ALERT_INTERVAL;
-  const totalTime = state.totalFocusTime + state.totalPauseTime;
-  const efficiency = totalTime > 0 ? Math.round((state.totalFocusTime / totalTime) * 100) : 0;
+  const productiveTime = state.totalFocusTime + procrastTime;
+  const efficiency = productiveTime > 0 ? Math.round((state.totalFocusTime / productiveTime) * 100) : 0;
 
   const statsData = {
     title: 'Session Statistics',
@@ -737,7 +750,10 @@ killNoBtn.addEventListener('click', () => {
 // Kill-all confirmation - Yes
 killYesBtn.addEventListener('click', () => {
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
   const logFile = path.join(logsDir, `${dateStr}.json`);
 
   if (fs.existsSync(logFile)) {
