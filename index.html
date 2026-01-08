@@ -13,7 +13,7 @@
     <div class="header">
       <div class="drag-area">
         <span class="app-title">Focus Pocus</span>
-        <span class="app-version">(Version 1.1)</span>
+        <span class="app-version">(Version 1.2)</span>
       </div>
       <button class="minimize-btn" id="minimizeBtn">
         <i class="fas fa-minus"></i>
@@ -50,6 +50,10 @@
         <button class="control-btn stop-btn" id="stopBtn" title="Stop" disabled>
           <span class="btn-text">STOP</span>
         </button>
+      </div>
+
+      <div class="last-session-display" id="lastSessionDisplay" style="display: none;">
+        Last session, you had <span class="last-session-self-rating" id="lastSessionSelfRating">0</span>% self-assessed efficiency and <span class="last-session-focus-rating" id="lastSessionFocusRating">0</span>% focus efficiency. Let's do even better!
       </div>
 
       <div class="stats-section">
@@ -168,6 +172,33 @@
         <button class="kill-confirm-btn kill-yes-btn" id="killYesBtn">Yes</button>
         <button class="kill-confirm-btn kill-no-btn" id="killNoBtn">No</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Efficiency Rating Modal -->
+  <div id="efficiencyModal" class="alert-modal">
+    <div class="alert-content efficiency-modal-content">
+      <div class="efficiency-header">
+        <h2>How efficient were you?</h2>
+      </div>
+
+      <div class="efficiency-emoji" id="efficiencyEmoji">😐</div>
+
+      <div class="efficiency-controls">
+        <input type="range" id="efficiencySlider" class="efficiency-slider"
+               min="0" max="100" value="50">
+        <input type="number" id="efficiencyInput" class="efficiency-input"
+               min="0" max="100" value="50">
+        <span class="efficiency-percent">%</span>
+      </div>
+
+      <div class="efficiency-message" id="efficiencyMessage">
+        Keep going, you can do better!
+      </div>
+
+      <button class="efficiency-submit-btn" id="efficiencySubmitBtn">
+        Submit Rating
+      </button>
     </div>
   </div>
 

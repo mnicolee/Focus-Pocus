@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm run dev:*)",
+      "Bash(powershell -Command \"Move-Item -Path ''DEV_MODE_GUIDE.md'' -Destination ''dev-tools\\\\'' -Force; Move-Item -Path ''TEST_DEV_MODE.md'' -Destination ''dev-tools\\\\'' -Force; Move-Item -Path ''QUICK_TEST.bat'' -Destination ''dev-tools\\\\'' -Force; Move-Item -Path ''CHECK_LOGS.bat'' -Destination ''dev-tools\\\\'' -Force; Move-Item -Path ''TROUBLESHOOTING.md'' -Destination ''dev-tools\\\\'' -Force; Move-Item -Path ''FIXES_SUMMARY.md'' -Destination ''dev-tools\\\\'' -Force\")",
+      "Bash(ls:*)",
+      "Bash(done)"
     ]
   }
 }

@@ -5,6 +5,121 @@ All notable changes to Focus Pocus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2] - 2026-01-08
+
+### Added
+- **Self-Assessment Rating System**: Rate your efficiency (0-100%) after each session
+  - Interactive slider with synchronized number input
+  - Submit rating popup appears when clicking STOP button
+  - Ratings saved with session data in log files
+- **Dynamic Emoji Feedback**: Emojis change based on your rating
+  - 11 different emojis from 😢 (0%) to 🔥 (100%)
+  - Emoji updates live as you move the slider
+- **Personalized Messages**: Context-aware feedback based on your rating
+  - High ratings (≥70%): 5 encouraging messages (randomized)
+  - Low ratings (<70%): 8 motivational scolding messages (randomized)
+  - Messages update dynamically with slider movement
+- **Last Session Display**: Shows previous session's ratings on app startup
+  - Displays both self-assessed efficiency and focus efficiency
+  - Located between control buttons and statistics section
+  - Percentage numbers highlighted in yellow (#FFD700)
+  - Message: "Last session, you had X% self-assessed efficiency and Y% focus efficiency. Let's do even better!"
+- **Enhanced Statistics Tracking**: Self-Assessed Efficiency added as 7th metric
+  - Shows average of all rated sessions
+  - Displays "N/A" when no rated sessions exist
+  - Available in Daily, Weekly, and Monthly statistics views
+- **Dev Mode**: Safe testing environment without affecting production data
+  - Separate `logs-dev/` folder for development data
+  - Red window title: "Focus Pocus (DEV VERSION)"
+  - Auto-generates fake session data for testing
+  - DevTools opens automatically
+  - Run with `npm run dev` or `dev-tools\QUICK_TEST.bat`
+  - All dev-related files organized in `dev-tools/` folder
+- **Stop During Pause**: Stop button now available during pause state
+  - No need to resume before stopping a session
+  - Improved user experience for ending sessions
+
+### Changed
+- Window height increased from 520px to 560px for better layout
+- Efficiency modal has fixed size (400px width, 420px min-height) to prevent dynamic resizing
+- Efficiency message container uses fixed height (72px) instead of min-height
+- Last session display positioned between control buttons and statistics section
+- Statistics window now shows 7 items instead of 6
+- Stop button behavior: now triggers efficiency rating popup instead of immediately ending session
+- Button state logic: STOP button remains enabled during pause state
+
+### Fixed
+- **CRITICAL BUG**: Efficiency ratings not being saved to log files
+  - `saveSessionLog()` function was missing `efficiencyRating` field in logs.push()
+  - Sessions before this fix don't have rating data (shows "N/A" correctly)
+  - All new sessions now save ratings properly
+- Dev mode detection on Windows using `run-dev.js` script
+  - Previous `set` command in npm script didn't persist environment variables
+  - Now uses `process.env.DEV_MODE` set directly in Node.js
+- Modal size jumping when slider moves
+  - Changed from dynamic min-height to fixed height
+  - Prevents visual jumps during interaction
+- Self-assessed efficiency showing 0% instead of "N/A"
+  - Now correctly shows "N/A" when no rated sessions exist
+  - Uses null instead of 0 to distinguish "no data" from "rated as 0%"
+
+### Technical Details
+- **Session Log Structure**: Added `efficiencyRating` field (0-100)
+  ```json
+  {
+    "timestamp": "2026-01-08T...",
+    "focusTime": 1200000,
+    "procrastinationCount": 0,
+    "pauseCount": 0,
+    "pauseTime": 0,
+    "efficiencyRating": 85
+  }
+  ```
+- **Dev Mode Implementation**:
+  - Uses `run-dev.js` launcher script to set environment variables
+  - Global `DEV_MODE` flag accessible in both main and renderer processes
+  - Separate log directory prevents data contamination
+  - Fake data generator creates realistic multi-day session history
+- **Statistics Calculation**:
+  - Self-assessed efficiency = Average of all sessions with `efficiencyRating` field
+  - Returns null (displays "N/A") when no rated sessions exist
+  - Backward compatible with sessions from v1.0 and v1.1
+- **Efficiency Rating UI**:
+  - 10 emoji levels mapped to rating ranges (0-10, 11-20, ..., 91-100)
+  - Message pools: 5 high-encouragement, 8 low-scolding messages
+  - Real-time synchronization between slider and number input
+  - Input validation: clamped to 0-100 range
+
+### File Structure Updates
+```
+Focus-Pocus/
+├── dev-tools/                    # NEW: Development files
+│   ├── DEV_MODE_GUIDE.md         # Dev mode documentation
+│   ├── QUICK_TEST.bat            # Quick dev mode launcher
+│   ├── CHECK_LOGS.bat            # Log inspection tool
+│   ├── TROUBLESHOOTING.md        # Dev mode troubleshooting
+│   └── FIXES_SUMMARY.md          # Bug fix documentation
+├── logs/                         # Production session data
+├── logs-dev/                     # NEW: Dev mode session data (auto-generated)
+├── run-dev.js                    # NEW: Dev mode launcher script
+├── CRITICAL_BUG_FIXED.md         # Critical bug documentation
+├── WHY_NA_IN_STATS.md            # N/A behavior explanation
+├── TEST_PRODUCTION.bat           # Production testing script
+└── [existing files...]
+```
+
+### Backward Compatibility
+- Sessions from v1.0 and v1.1 work seamlessly with v1.2
+- Old sessions without `efficiencyRating` field display correctly
+- Statistics show "N/A" for self-assessed efficiency until first rated session created
+- No migration or data conversion required
+
+### Known Issues
+- Previous sessions (before v1.2) don't have efficiency ratings
+  - This is expected behavior, not a bug
+  - Create a new session and rate it to see the feature in action
+- Self-assessed efficiency shows "N/A" until you create your first rated session in v1.2
+
 ## [1.1] - 2026-01-03
 
 ### Added

@@ -6,9 +6,16 @@ let mainWindow;
 let statsWindow = null;
 
 function createWindow() {
+  // Pass DEV_MODE to renderer
+  const isDevMode = process.env.DEV_MODE === 'true';
+  global.DEV_MODE = isDevMode;
+
+  console.log('[Main] DEV_MODE:', isDevMode);
+  console.log('[Main] process.env.DEV_MODE:', process.env.DEV_MODE);
+
   mainWindow = new BrowserWindow({
     width: 400,
-    height: 450,
+    height: 560,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
@@ -16,11 +23,17 @@ function createWindow() {
     skipTaskbar: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      additionalArguments: isDevMode ? ['--dev-mode'] : []
     }
   });
 
   mainWindow.loadFile('index.html');
+
+  // Open DevTools in dev mode for debugging
+  if (isDevMode) {
+    mainWindow.webContents.openDevTools();
+  }
 
   // Keep window always on top even when other windows are focused
   mainWindow.setAlwaysOnTop(true, 'floating');
@@ -75,7 +88,7 @@ ipcMain.on('show-stats-window', (event, statsData) => {
 
   statsWindow = new BrowserWindow({
     width: 480,
-    height: 620,
+    height: 700,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
