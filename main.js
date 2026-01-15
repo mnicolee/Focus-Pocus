@@ -21,6 +21,7 @@ function createWindow() {
     resizable: false,
     transparent: false,
     skipTaskbar: false,
+    icon: path.join(__dirname, 'image', 'icon3.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -107,6 +108,7 @@ ipcMain.on('show-stats-window', (event, statsData) => {
     resizable: false,
     parent: mainWindow,
     modal: false,
+    icon: path.join(__dirname, 'image', 'icon3.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
