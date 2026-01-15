@@ -80,6 +80,19 @@ ipcMain.on('close-window', () => {
   }
 });
 
+// Restore and focus window (for alerts)
+ipcMain.on('restore-and-focus-window', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.show();
+    mainWindow.focus();
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    mainWindow.setAlwaysOnTop(true, 'floating');
+  }
+});
+
 // Handle stats window
 ipcMain.on('show-stats-window', (event, statsData) => {
   if (statsWindow) {

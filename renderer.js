@@ -27,6 +27,11 @@ let state = {
   inactivityThreshold: 10 * 60 * 1000 // Default 10 minutes
 };
 
+// Alert repeat interval storage
+let alertRepeatInterval = null;
+let currentAlertType = null;
+let currentBeepCount = 1;
+
 // Constants
 const ALERT_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const YOUTUBE_DELAY = 1 * 60 * 1000; // 1 minute before YouTube alert
@@ -421,9 +426,29 @@ function playBeep(type, beepCount = 1) {
 
 // Show alert
 function showAlert(message, type = 'inactivity', beepCount = 1) {
+  // Clear any existing repeat interval
+  if (alertRepeatInterval) {
+    clearInterval(alertRepeatInterval);
+  }
+
+  // Store current alert info for repeating
+  currentAlertType = type;
+  currentBeepCount = beepCount;
+
+  // Show the alert modal
   alertText.textContent = message;
   alertModal.classList.add('show');
+
+  // Play the first beep
   playBeep(type, beepCount);
+
+  // Request window to come to front
+  ipcRenderer.send('restore-and-focus-window');
+
+  // Set up repeating beep every 5 seconds until dismissed
+  alertRepeatInterval = setInterval(() => {
+    playBeep(currentAlertType, currentBeepCount);
+  }, 5000); // Repeat every 5 seconds
 }
 
 // Load and display sessions for selection
@@ -947,6 +972,12 @@ closeModal.addEventListener('click', () => {
 // Dismiss alert
 dismissAlert.addEventListener('click', () => {
   alertModal.classList.remove('show');
+
+  // Stop the repeating beep
+  if (alertRepeatInterval) {
+    clearInterval(alertRepeatInterval);
+    alertRepeatInterval = null;
+  }
 });
 
 // Window controls
