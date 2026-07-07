@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2026-02-10T04:06:51.000Z",
+    "focusTime": 24952865,
+    "procrastinationCount": 1,
+    "pauseCount": 0,
+    "pauseTime": 0,
+    "efficiencyRating": 77
+  },
+  {
+    "timestamp": "2026-02-10T06:45:15.000Z",
+    "focusTime": 8641735,
+    "procrastinationCount": 0,
+    "pauseCount": 0,
+    "pauseTime": 0,
+    "efficiencyRating": 80
+  }
+]

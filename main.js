@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, powerMonitor } = require('electron');
+const { app, BrowserWindow, ipcMain, powerMonitor, dialog } = require('electron');
 const path = require('path');
 const activeWin = require('active-win');
 
@@ -66,6 +66,27 @@ ipcMain.handle('get-active-window', async () => {
   } catch (error) {
     return null;
   }
+});
+
+// Standard per-user paths (used to default the data folder to Documents/FocusPocus)
+ipcMain.on('get-app-paths', (event) => {
+  event.returnValue = {
+    documents: app.getPath('documents'),
+    userData: app.getPath('userData')
+  };
+});
+
+// Native folder picker for choosing where Focus Pocus keeps its data
+ipcMain.handle('choose-folder', async (event, defaultPath) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose where Focus Pocus keeps your data',
+    defaultPath: defaultPath || undefined,
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (result.canceled || !result.filePaths.length) {
+    return null;
+  }
+  return result.filePaths[0];
 });
 
 // Handle window controls

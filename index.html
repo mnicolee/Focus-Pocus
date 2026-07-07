@@ -16,6 +16,9 @@
         <span class="app-title">Focus Pocus</span>
         <span class="app-version">(Version 1.2)</span>
       </div>
+      <button class="settings-btn" id="settingsBtn" title="Blocklist settings">
+        <i class="fas fa-gear"></i>
+      </button>
       <button class="minimize-btn" id="minimizeBtn">
         <i class="fas fa-minus"></i>
       </button>
@@ -200,6 +203,55 @@
       <button class="efficiency-submit-btn" id="efficiencySubmitBtn">
         Submit Rating
       </button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="blocklistModal" class="modal">
+    <div class="modal-content blocklist-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-modal" id="closeBlocklist">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <div class="settings-group-title">Where your data is kept</div>
+          <p class="blocklist-hint">
+            Everything stays offline on your own machine. Pick the folder where Focus Pocus
+            saves your session logs and settings.
+          </p>
+          <div class="folder-row">
+            <input type="text" id="dataFolderInput" class="folder-input"
+                   autocomplete="off" spellcheck="false" readonly>
+            <button class="folder-browse-btn" id="dataFolderBrowse">Browse</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Distraction blocklist</div>
+          <p class="blocklist-hint">
+            Add a site or app by the name shown in its browser tab or title bar,
+            like <strong>youtube</strong>, <strong>tiktok</strong>, or <strong>netflix</strong>.
+            Focus Pocus nudges you when that word shows up in the window you're using.
+            You can paste a link too and we'll keep just the name.
+          </p>
+          <div class="blocklist-input-row">
+            <input type="text" id="blocklistInput" class="blocklist-input"
+                   placeholder="e.g. youtube" maxlength="60" autocomplete="off" spellcheck="false">
+            <button class="blocklist-add-btn" id="blocklistAddBtn">Add</button>
+          </div>
+          <div class="blocklist-items" id="blocklistItems"></div>
+          <div class="blocklist-empty" id="blocklistEmpty">
+            Your blocklist is empty. Add your first distraction above.
+          </div>
+        </div>
+      </div>
+      <div class="settings-footer">
+        <button class="settings-cancel-btn" id="settingsCancelBtn">Cancel</button>
+        <button class="settings-save-btn" id="settingsSaveBtn">Save</button>
+      </div>
     </div>
   </div>
 

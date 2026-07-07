@@ -20,11 +20,11 @@ let state = {
   procrastinationCount: 0,
   lastInactivityAlert: null,
   consecutiveInactivityAlerts: 0, // Track how many times inactivity alert has been ignored
-  lastYoutubeAlert: null,
-  youtubeDetectedAt: null, // When YouTube was first detected
-  lastMangaAlert: null,
-  mangaDetectedAt: null, // When manga site was first detected
-  inactivityThreshold: 10 * 60 * 1000 // Default 10 minutes
+  lastDistractionAlert: null,
+  distractionDetectedAt: null, // When a blocked site/app was first seen this stretch
+  lastDistractionMatch: null,  // Which blocklist term matched
+  inactivityThreshold: 10 * 60 * 1000, // Default 10 minutes
+  blocklist: [] // User-defined distraction keywords (lowercased)
 };
 
 // Alert repeat interval storage
@@ -34,8 +34,7 @@ let currentBeepCount = 1;
 
 // Constants
 const ALERT_INTERVAL = 10 * 60 * 1000; // 10 minutes
-const YOUTUBE_DELAY = 1 * 60 * 1000; // 1 minute before YouTube alert
-const MANGA_DELAY = 1 * 60 * 1000; // 1 minute before manga alert
+const DISTRACTION_DELAY = 1 * 60 * 1000; // 1 minute on a blocked site/app before nudging
 const CHECK_INTERVAL = 1000; // Check every second
 
 // Efficiency rating emojis (0-100 in steps of 10)
@@ -103,11 +102,95 @@ const efficiencySubmitBtn = document.getElementById('efficiencySubmitBtn');
 const lastSessionDisplay = document.getElementById('lastSessionDisplay');
 const lastSessionSelfRating = document.getElementById('lastSessionSelfRating');
 const lastSessionFocusRating = document.getElementById('lastSessionFocusRating');
+const settingsBtn = document.getElementById('settingsBtn');
+const blocklistModal = document.getElementById('blocklistModal');
+const closeBlocklist = document.getElementById('closeBlocklist');
+const blocklistInput = document.getElementById('blocklistInput');
+const blocklistAddBtn = document.getElementById('blocklistAddBtn');
+const blocklistItems = document.getElementById('blocklistItems');
+const blocklistEmpty = document.getElementById('blocklistEmpty');
+const dataFolderInput = document.getElementById('dataFolderInput');
+const dataFolderBrowse = document.getElementById('dataFolderBrowse');
+const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+const settingsCancelBtn = document.getElementById('settingsCancelBtn');
 
-// Logs directory - use separate directory for dev mode
-const logsDir = path.join(__dirname, DEV_MODE ? 'logs-dev' : 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+// ---- Where Focus Pocus keeps its data (offline, in the user's Documents by default) ----
+// A tiny pointer file in the app's per-user config spot remembers which folder the user
+// chose; the logs and blocklist themselves live in that folder.
+const appPaths = ipcRenderer.sendSync('get-app-paths'); // { documents, userData }
+const pointerFile = path.join(appPaths.userData, 'focus-pocus-config.json');
+
+// Legacy locations (from before the data folder was configurable) - used once to migrate
+const legacyLogsDir = path.join(__dirname, 'logs');
+const legacyBlocklistFile = path.join(__dirname, 'user_data', 'blacklist.json');
+
+function readConfig() {
+  try {
+    if (fs.existsSync(pointerFile)) {
+      const cfg = JSON.parse(fs.readFileSync(pointerFile, 'utf8'));
+      if (cfg && typeof cfg === 'object') return cfg;
+    }
+  } catch (e) {
+    console.error('[Config] Failed to read pointer:', e);
+  }
+  return {};
+}
+
+function writeConfig() {
+  try {
+    fs.writeFileSync(pointerFile, JSON.stringify(config, null, 2));
+  } catch (e) {
+    console.error('[Config] Failed to write pointer:', e);
+  }
+}
+
+let config = readConfig();
+let dataDir = config.dataDir || path.join(appPaths.documents, 'FocusPocus');
+
+// Dev mode keeps its test data local so it never touches the real Documents folder.
+let logsDir = DEV_MODE ? path.join(__dirname, 'logs-dev') : path.join(dataDir, 'logs');
+let blocklistFile = DEV_MODE
+  ? path.join(__dirname, 'user_data', 'blacklist.json')
+  : path.join(dataDir, 'blacklist.json');
+
+function ensureDataDirs() {
+  try {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+  } catch (e) {
+    console.error('[Config] Failed to create data folders:', e);
+  }
+}
+
+// Copy logs + blocklist from one place to another without overwriting newer files.
+function copyDataInto(fromLogsDir, fromBlocklistFile, toLogsDir, toBlocklistFile) {
+  try {
+    if (fs.existsSync(fromLogsDir) && path.resolve(fromLogsDir) !== path.resolve(toLogsDir)) {
+      if (!fs.existsSync(toLogsDir)) fs.mkdirSync(toLogsDir, { recursive: true });
+      for (const f of fs.readdirSync(fromLogsDir)) {
+        if (!f.endsWith('.json')) continue;
+        const dest = path.join(toLogsDir, f);
+        if (!fs.existsSync(dest)) fs.copyFileSync(path.join(fromLogsDir, f), dest);
+      }
+    }
+    if (fs.existsSync(fromBlocklistFile) && !fs.existsSync(toBlocklistFile)
+        && path.resolve(fromBlocklistFile) !== path.resolve(toBlocklistFile)) {
+      fs.copyFileSync(fromBlocklistFile, toBlocklistFile);
+    }
+  } catch (e) {
+    console.error('[Config] Failed to copy data:', e);
+  }
+}
+
+ensureDataDirs();
+
+// First run after this update: bring the old app-folder logs/blocklist into the new data
+// folder (copy, so the originals stay put as a backup), then remember we've done it.
+if (!DEV_MODE && !config.migrated) {
+  copyDataInto(legacyLogsDir, legacyBlocklistFile, logsDir, blocklistFile);
+  config.dataDir = dataDir;
+  config.migrated = true;
+  writeConfig();
 }
 
 // Update title if in dev mode - use DOMContentLoaded to ensure elements exist
@@ -235,6 +318,168 @@ inactivityThresholdInput.addEventListener('change', (e) => {
   }
 });
 
+// ---------- Settings: distraction blocklist + data folder ----------
+// Edits are staged in working copies and only written to disk when Save is hit.
+let workingBlocklist = [];
+let workingDataDir = '';
+
+// Turn user input into a matchable keyword: a site or app name as it would
+// appear in a window title. Accepts a plain word or a pasted URL/domain.
+function toKeyword(raw) {
+  let s = (raw || '').trim().toLowerCase();
+  if (!s) return '';
+  // Strip protocol, leading www., and any path/query
+  s = s.replace(/^https?:\/\//, '').replace(/^www\./, '');
+  s = s.split('/')[0].split('?')[0];
+  // If it looks like a domain (a.b.c), keep the main label: youtube.com -> youtube
+  if (s.includes('.')) {
+    const parts = s.split('.').filter(Boolean);
+    if (parts.length >= 2) {
+      s = parts[parts.length - 2];
+    }
+  }
+  return s.trim();
+}
+
+function loadBlocklist() {
+  try {
+    if (fs.existsSync(blocklistFile)) {
+      const data = JSON.parse(fs.readFileSync(blocklistFile, 'utf8'));
+      if (data && Array.isArray(data.keywords)) {
+        state.blocklist = data.keywords.map(k => String(k).toLowerCase().trim()).filter(Boolean);
+        return;
+      }
+    }
+  } catch (e) {
+    console.error('[Blocklist] Failed to load:', e);
+  }
+  // First run (or unreadable): seed with a sensible default and save it
+  state.blocklist = ['youtube'];
+  saveBlocklist();
+}
+
+function saveBlocklist() {
+  try {
+    fs.writeFileSync(blocklistFile, JSON.stringify({ keywords: state.blocklist }, null, 2));
+  } catch (e) {
+    console.error('[Blocklist] Failed to save:', e);
+  }
+}
+
+// Render the STAGED blocklist (not yet saved) inside the settings panel
+function renderBlocklist() {
+  blocklistItems.innerHTML = '';
+  blocklistEmpty.style.display = workingBlocklist.length ? 'none' : 'block';
+
+  workingBlocklist.forEach(term => {
+    const chip = document.createElement('div');
+    chip.className = 'blocklist-chip';
+
+    const label = document.createElement('span');
+    label.textContent = term;
+    chip.appendChild(label);
+
+    const remove = document.createElement('button');
+    remove.className = 'blocklist-chip-remove';
+    remove.setAttribute('aria-label', `Remove ${term}`);
+    remove.innerHTML = '<i class="fas fa-times"></i>';
+    remove.addEventListener('click', () => removeWorkingTerm(term));
+    chip.appendChild(remove);
+
+    blocklistItems.appendChild(chip);
+  });
+}
+
+function addWorkingTerm(raw) {
+  const term = toKeyword(raw);
+  if (term && !workingBlocklist.includes(term)) {
+    workingBlocklist.push(term);
+    renderBlocklist();
+  }
+  blocklistInput.value = '';
+  blocklistInput.focus();
+}
+
+function removeWorkingTerm(term) {
+  workingBlocklist = workingBlocklist.filter(t => t !== term);
+  renderBlocklist();
+}
+
+// Open the settings panel: stage the current values into working copies
+function openSettings() {
+  workingBlocklist = state.blocklist.slice();
+  workingDataDir = dataDir;
+  dataFolderInput.value = dataDir;
+  renderBlocklist();
+  blocklistModal.classList.add('show');
+  blocklistInput.focus();
+}
+
+// Close without saving: staged edits are simply discarded (nothing was written)
+function closeSettings() {
+  blocklistModal.classList.remove('show');
+}
+
+// Commit staged changes to disk
+function saveSettings() {
+  // Data folder (dev mode always keeps its data local, so leave it alone there)
+  const chosen = (dataFolderInput.value || '').trim();
+  const newDir = chosen || workingDataDir;
+  if (!DEV_MODE && path.resolve(newDir) !== path.resolve(dataDir)) {
+    const oldLogsDir = logsDir;
+    const oldBlocklistFile = blocklistFile;
+    dataDir = newDir;
+    logsDir = path.join(dataDir, 'logs');
+    blocklistFile = path.join(dataDir, 'blacklist.json');
+    ensureDataDirs();
+    // Carry existing logs + blocklist into the new home (copy, non-destructive)
+    copyDataInto(oldLogsDir, oldBlocklistFile, logsDir, blocklistFile);
+    config.dataDir = dataDir;
+    config.migrated = true;
+    writeConfig();
+  }
+
+  // Blocklist
+  state.blocklist = workingBlocklist.slice();
+  saveBlocklist();
+
+  blocklistModal.classList.remove('show');
+  updateLastSessionDisplay(); // reflect any change in log location
+}
+
+// Wiring
+settingsBtn.addEventListener('click', openSettings);
+closeBlocklist.addEventListener('click', closeSettings);
+settingsCancelBtn.addEventListener('click', closeSettings);
+settingsSaveBtn.addEventListener('click', saveSettings);
+
+blocklistModal.addEventListener('click', (e) => {
+  if (e.target === blocklistModal) {
+    closeSettings();
+  }
+});
+
+blocklistAddBtn.addEventListener('click', () => addWorkingTerm(blocklistInput.value));
+
+blocklistInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addWorkingTerm(blocklistInput.value);
+  }
+});
+
+// Browse for a data folder (native picker); only staged until Save
+dataFolderBrowse.addEventListener('click', async () => {
+  const picked = await ipcRenderer.invoke('choose-folder', dataFolderInput.value || dataDir);
+  if (picked) {
+    workingDataDir = picked;
+    dataFolderInput.value = picked;
+  }
+});
+
+// Load the saved blocklist at startup
+loadBlocklist();
+
 // Format time helper
 function formatTime(ms) {
   const seconds = Math.floor((ms / 1000) % 60);
@@ -331,67 +576,44 @@ async function checkActivity() {
     }
   }
 
-  // Check for YouTube (with 1-minute delay)
+  // Check the active window against the user's distraction blocklist (1-min delay)
   try {
     const activeWindow = await ipcRenderer.invoke('get-active-window');
-    const isYouTube = activeWindow && activeWindow.title &&
-                      (activeWindow.title.includes('YouTube') ||
-                       activeWindow.url && activeWindow.url.includes('youtube.com'));
+    // What active-win can see on Windows: the window title + the owning app's
+    // name. We match the user's keywords against both (case-insensitive), so a
+    // blocklist entry can catch a browser tab ("... - YouTube") or a desktop app.
+    const haystack = activeWindow
+      ? `${activeWindow.title || ''} ${(activeWindow.owner && activeWindow.owner.name) || ''}`.toLowerCase()
+      : '';
+    const match = haystack ? state.blocklist.find(term => term && haystack.includes(term)) : null;
 
-    if (isYouTube) {
-      // YouTube is active
-      if (!state.youtubeDetectedAt) {
-        // First time detecting YouTube in this session
-        state.youtubeDetectedAt = now;
+    if (match) {
+      // A blocked site/app is in front
+      if (!state.distractionDetectedAt) {
+        // First time we've seen a distraction this stretch
+        state.distractionDetectedAt = now;
+        state.lastDistractionMatch = match;
       } else {
-        // YouTube has been active for some time
-        const youtubeActiveDuration = now - state.youtubeDetectedAt;
+        const distractionDuration = now - state.distractionDetectedAt;
 
-        if (youtubeActiveDuration >= YOUTUBE_DELAY) {
-          // YouTube has been active for 1+ minute, show alert if needed
-          if (!state.lastYoutubeAlert || (now - state.lastYoutubeAlert) > ALERT_INTERVAL) {
-            showAlert('Watching YouTube? Time to get back to work!', 'youtube');
-            state.lastYoutubeAlert = now;
+        if (distractionDuration >= DISTRACTION_DELAY) {
+          // On a blocked site/app for 1+ minute, nudge if due
+          if (!state.lastDistractionAlert || (now - state.lastDistractionAlert) > ALERT_INTERVAL) {
+            showAlert(`Distracted by "${match}"? Time to get back to work!`, 'youtube');
+            state.lastDistractionAlert = now;
             state.procrastinationCount++;
           }
         }
       }
     } else {
-      // Not on YouTube, reset the timer
-      state.youtubeDetectedAt = null;
-    }
-
-    // Check for manga sites (with 1-minute delay)
-    const isManga = activeWindow && activeWindow.url &&
-                    (activeWindow.url.includes('kingofshojo.com') ||
-                     activeWindow.url.includes('arenascan.com'));
-
-    if (isManga) {
-      // Manga site is active
-      if (!state.mangaDetectedAt) {
-        // First time detecting manga site in this session
-        state.mangaDetectedAt = now;
-      } else {
-        // Manga site has been active for some time
-        const mangaActiveDuration = now - state.mangaDetectedAt;
-
-        if (mangaActiveDuration >= MANGA_DELAY) {
-          // Manga site has been active for 1+ minute, show alert if needed
-          if (!state.lastMangaAlert || (now - state.lastMangaAlert) > ALERT_INTERVAL) {
-            showAlert('Reading manga? Time to get back to work!', 'manga');
-            state.lastMangaAlert = now;
-            state.procrastinationCount++;
-          }
-        }
-      }
-    } else {
-      // Not on manga site, reset the timer
-      state.mangaDetectedAt = null;
+      // Nothing blocked in front, reset the timer
+      state.distractionDetectedAt = null;
+      state.lastDistractionMatch = null;
     }
   } catch (error) {
-    // Site detection not available, silently continue
-    state.youtubeDetectedAt = null;
-    state.mangaDetectedAt = null;
+    // Active-window detection not available, silently continue
+    state.distractionDetectedAt = null;
+    state.lastDistractionMatch = null;
   }
 }
 
@@ -758,10 +980,9 @@ startBtn.addEventListener('click', () => {
   state.procrastinationCount = 0;
   state.lastInactivityAlert = null;
   state.consecutiveInactivityAlerts = 0;
-  state.lastYoutubeAlert = null;
-  state.youtubeDetectedAt = null;
-  state.lastMangaAlert = null;
-  state.mangaDetectedAt = null;
+  state.lastDistractionAlert = null;
+  state.distractionDetectedAt = null;
+  state.lastDistractionMatch = null;
 
   // Disable kill-all button when starting new session
   killAllBtn.disabled = true;

@@ -5,8 +5,10 @@ package-lock.json
 # Build output
 dist/
 
-# Logs (optional - uncomment if you don't want to track session logs)
-# logs/
+# Real session logs are personal data and live offline in Documents/FocusPocus,
+# so they are not tracked here. The repo ships logs-sample/ instead.
+logs/
+logs-dev/
 
 # OS files
 .DS_Store
