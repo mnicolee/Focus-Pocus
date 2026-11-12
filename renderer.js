@@ -626,7 +626,7 @@ async function checkActivity() {
         if (distractionDuration >= DISTRACTION_DELAY) {
           // On a blocked site/app for 1+ minute, nudge if due
           if (!state.lastDistractionAlert || (now - state.lastDistractionAlert) > ALERT_INTERVAL) {
-            showAlert(`Distracted by "${match}"? Time to get back to work!`, 'youtube');
+            showAlert(`Distracted by ${match.toUpperCase()}? Time to get back to work!`, 'youtube');
             state.lastDistractionAlert = now;
             state.procrastinationCount++;
           }

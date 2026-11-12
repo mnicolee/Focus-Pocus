@@ -1070,7 +1070,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a8c5e6;
+  color: #1f2937;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -1080,7 +1080,7 @@ body {
 .loud-mode-row input {
   width: 16px;
   height: 16px;
-  accent-color: #a8c5e6;
+  accent-color: #667eea;
 }
 
 /* The window is a fixed size: while the sound warning shows, it takes the
