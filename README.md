@@ -12,7 +12,7 @@
 - 📺 **Knows your rabbit holes.** Add sites or apps like `youtube` or `netflix` to your blocklist. Spend 15 seconds on one and you get a nudge.
 - 🔊 **Gets louder if you ignore it.** The alert beeps every 5 seconds until you press **Got it**, louder each time.
 - 🔇 **Warns you when you're muted.** If your computer is muted or very quiet, a banner tells you, with a one-click fix. You can also let it unmute for alerts.
-- ⏸️ **Counts breaks honestly.** Pause and resume as often as you like. Breaks are timed separately.
+- ⏸️ **Counts breaks honestly.** Pause and resume as often as you like. Breaks are timed separately. If you want, turn on a break reminder in ⚙️ Settings and it will ask, each time you pause, whether to nudge you back after a number of minutes. It's off by default.
 - 🔥 **Asks how it went.** When you stop, rate the session from 😢 to 🔥.
 - 📊 **Shows you the trend.** Daily, weekly and monthly stats, with your rating next to the measured efficiency.
 

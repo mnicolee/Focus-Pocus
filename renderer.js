@@ -120,6 +120,11 @@ const soundWarning = document.getElementById('soundWarning');
 const soundWarningText = document.getElementById('soundWarningText');
 const soundFixBtn = document.getElementById('soundFixBtn');
 const loudModeInput = document.getElementById('loudModeInput');
+const breakReminderInput = document.getElementById('breakReminderInput');
+const breakModal = document.getElementById('breakModal');
+const breakMinutesInput = document.getElementById('breakMinutesInput');
+const breakYesBtn = document.getElementById('breakYesBtn');
+const breakNoBtn = document.getElementById('breakNoBtn');
 
 // ---- Where Focus Pocus keeps its data (offline, in the user's Documents by default) ----
 // A tiny pointer file in the app's per-user config spot remembers which folder the user
@@ -418,6 +423,7 @@ function openSettings() {
   workingDataDir = dataDir;
   dataFolderInput.value = dataDir;
   loudModeInput.checked = !!config.loudMode;
+  breakReminderInput.checked = !!config.breakReminder;
   renderBlocklist();
   blocklistModal.classList.add('show');
   blocklistInput.focus();
@@ -448,8 +454,9 @@ function saveSettings() {
   }
 
   // Alert sound
-  if (!!config.loudMode !== loudModeInput.checked) {
+  if (!!config.loudMode !== loudModeInput.checked || !!config.breakReminder !== breakReminderInput.checked) {
     config.loudMode = loudModeInput.checked;
+    config.breakReminder = breakReminderInput.checked;
     writeConfig();
   }
 
@@ -1122,11 +1129,51 @@ pauseBtn.addEventListener('click', () => {
   statusText.textContent = 'Paused';
   updateAlertCountdown();
   updateButtonStates('paused');
+
+  // Optional break reminder (off unless turned on in Settings)
+  if (config.breakReminder) {
+    breakMinutesInput.value = config.breakMinutes || 10;
+    breakModal.classList.add('show');
+    breakMinutesInput.focus();
+    breakMinutesInput.select();
+  }
+});
+
+// ---------- Break reminder ----------
+let breakTimer = null;
+let breakSoundTimer = null;
+
+function cancelBreakReminder() {
+  clearTimeout(breakTimer);
+  clearTimeout(breakSoundTimer);
+  breakTimer = breakSoundTimer = null;
+  breakModal.classList.remove('show');
+}
+
+breakYesBtn.addEventListener('click', () => {
+  const minutes = Math.min(240, Math.max(1, parseInt(breakMinutesInput.value, 10) || 10));
+  breakModal.classList.remove('show');
+  if (config.breakMinutes !== minutes) { config.breakMinutes = minutes; writeConfig(); }
+  const ms = minutes * 60 * 1000;
+  statusText.textContent = `On a break (${minutes} min)`;
+  // Check the sound about 5 seconds before the reminder, like other alerts
+  breakSoundTimer = setTimeout(checkSound, Math.max(0, ms - PRE_ALERT_CHECK_MS));
+  breakTimer = setTimeout(() => {
+    breakTimer = null;
+    if (state.isRunning && state.isPaused) {
+      showAlert("Break's over! Time to get back to work.", 'inactivity', 3);
+    }
+  }, ms);
+});
+
+breakNoBtn.addEventListener('click', () => {
+  breakModal.classList.remove('show');
 });
 
 // Play button
 playBtn.addEventListener('click', () => {
   // Resume from pause
+  cancelBreakReminder();
   state.isPaused = false;
   const pauseDuration = Date.now() - state.pauseStartTime;
   state.totalPauseTime += pauseDuration;
@@ -1182,6 +1229,7 @@ efficiencyInput.addEventListener('input', (e) => {
 
 // Stop button - now shows efficiency rating modal
 stopBtn.addEventListener('click', () => {
+  cancelBreakReminder();
   state.stopInitiatedAt = Date.now();
   showEfficiencyModal();
 });

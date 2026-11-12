@@ -1088,3 +1088,38 @@ body {
 .sound-warning:not([hidden]) + .last-session-display {
   display: none !important;
 }
+
+/* Break reminder dialog */
+.break-minutes-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.break-minutes-input {
+  width: 70px;
+  padding: 6px 8px;
+  font: 600 16px 'IBM Plex Sans', sans-serif;
+  text-align: center;
+  border: 1px solid #c7cedb;
+  border-radius: 6px;
+}
+
+.break-yes-btn {
+  background: #667eea;
+  color: white;
+}
+
+.break-yes-btn:hover {
+  background: #5568d3;
+}
+
+.break-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #6b7280;
+}

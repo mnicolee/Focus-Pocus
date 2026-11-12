@@ -5,6 +5,14 @@ All notable changes to Focus Pocus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0] - 2026-11-12
+
+### Added
+- **Optional break reminder** (Settings → Breaks, off by default): when it's on, pressing PAUSE asks whether you'd like to be reminded to get back to work after a number of minutes you choose. Yes starts the timer; No just pauses. Pressing PLAY or STOP cancels the reminder. The minutes you pick are remembered for next time.
+
+### Changed
+- Blocklist nudges show the site in capitals without quotes, e.g. "Distracted by YOUTUBE?"
+
 ## [1.3] - 2026-11-12
 
 ### Added

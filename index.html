@@ -14,7 +14,7 @@
       <div class="drag-area">
         <img src="image/focustimer3.png" alt="Focus Pocus" class="app-icon">
         <span class="app-title">Focus Pocus</span>
-        <span class="app-version">(Version 1.3)</span>
+        <span class="app-version">(Version 2.0)</span>
       </div>
       <button class="settings-btn" id="settingsBtn" title="Blocklist settings">
         <i class="fas fa-gear"></i>
@@ -185,6 +185,24 @@
     </div>
   </div>
 
+  <!-- Break Reminder Modal (only when the setting is on) -->
+  <div id="breakModal" class="alert-modal">
+    <div class="alert-content">
+      <i class="fas fa-mug-hot alert-icon" style="color: #a8c5e6;"></i>
+      <div class="alert-text">When do you want to get back to work?</div>
+      <div class="break-minutes-row">
+        <span>After</span>
+        <input type="number" id="breakMinutesInput" class="break-minutes-input" min="1" max="240" value="10">
+        <span>minutes</span>
+      </div>
+      <p class="break-hint">If you don't want to set a timer, just click No.</p>
+      <div class="kill-confirm-buttons">
+        <button class="kill-confirm-btn break-yes-btn" id="breakYesBtn">Yes</button>
+        <button class="kill-confirm-btn kill-no-btn" id="breakNoBtn">No</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Efficiency Rating Modal -->
   <div id="efficiencyModal" class="alert-modal">
     <div class="alert-content efficiency-modal-content">
@@ -245,6 +263,18 @@
             If your computer is muted or very quiet when an alert goes off, Focus Pocus
             unmutes it and turns it up to 60% until you press "Got it", then puts it back
             the way it was.
+          </p>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Breaks</div>
+          <label class="loud-mode-row">
+            <input type="checkbox" id="breakReminderInput">
+            <span>Offer a break reminder when I pause</span>
+          </label>
+          <p class="blocklist-hint">
+            Off by default, because breaks are up to you. When it's on, pressing PAUSE asks whether
+            you'd like a nudge to get back to work after a number of minutes you choose.
           </p>
         </div>
 
