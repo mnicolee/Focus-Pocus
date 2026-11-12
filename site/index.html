@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Focus Pocus</title>
+<meta name="description" content="Focus Pocus is a small always-on-top focus timer that notices when you drift off, and keeps every session on your own computer.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/favicon.png" alt=""><span>Focus Pocus</span></a>
+    <nav class="tabs" aria-label="Pages">
+      <a href="./" aria-current="page">The idea</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="https://github.com/mnicolee/Focus-Pocus">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Stay on task, <em>like magic.</em></h1>
+        <p class="lede"><strong>Focus Pocus is a small timer that floats above your other windows and notices when you drift.</strong> Stop typing, scroll for too long or wander off to YouTube, and it calls you back. At the end of each session you rate how it went.</p>
+        <div class="cta">
+          <a class="btn primary" href="dashboard.html">See the dashboard</a>
+          <a class="btn" href="#run">Run it yourself</a>
+        </div>
+      </div>
+      <div class="art"><img src="assets/logo.webp" width="640" height="640" alt="Focus Pocus logo: a stopwatch wearing a witch's hat, next to a star-tipped wand"></div>
+    </div>
+  </section>
+
+  <section class="block" id="what">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="prose muted">You start a session and get on with your work. Focus Pocus watches quietly and only speaks up when something looks off.</p>
+      <div class="grid3">
+        <div class="card"><div class="ico" aria-hidden="true">⏱️</div><h3>Notices when you stop</h3><p>No keyboard or mouse for a while (10 minutes by default, and you can change it) and you get an alert.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🌀</div><h3>Catches doom-scrolling</h3><p>Ten minutes of nothing but scrolling counts as drifting off.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">📺</div><h3>Knows your rabbit holes</h3><p>Sites on your blocklist, like YouTube or manga, trigger a reminder every ten minutes.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">⏸️</div><h3>Breaks count, honestly</h3><p>Pause and resume as often as you like. Breaks are timed separately from focus.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🔥</div><h3>Rate yourself</h3><p>When you stop, slide from 😢 to 🔥 to say how the session really went.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">📊</div><h3>Look back</h3><p>See daily, weekly and monthly totals, and compare your own rating with the measured one.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="private">
+    <div class="wrap">
+      <h2>Your sessions stay on your computer</h2>
+      <p class="prose muted">The code is public. Your data isn't. Focus Pocus writes each session to a folder on your own machine and never uploads it anywhere.</p>
+      <div class="split">
+        <div class="box">
+          <h3><span aria-hidden="true">🌐</span> On GitHub, for everyone</h3>
+          <ul>
+            <li>The app's source code</li>
+            <li>A <strong>sample dataset</strong> of made-up sessions (<code>logs-sample/</code>)</li>
+            <li>This website</li>
+          </ul>
+        </div>
+        <div class="box solid">
+          <h3><span aria-hidden="true">🔒</span> On your computer, only for you</h3>
+          <ul>
+            <li>Your real sessions, saved to <code>Documents/FocusPocus/logs/</code></li>
+            <li>Your blocklist of distracting sites</li>
+            <li>You can move this folder from the app's settings</li>
+          </ul>
+        </div>
+      </div>
+      <p class="prose" style="margin-top:22px">The <a href="dashboard.html">dashboard</a> runs on the sample data, so anyone can try it. You can also open your own logs folder there. Your files are read inside your browser and never leave your computer.</p>
+    </div>
+  </section>
+
+  <section class="block" id="run">
+    <div class="wrap"><div class="prose">
+      <h2>Run it yourself</h2>
+      <p class="muted">You'll need <a href="https://nodejs.org/">Node.js</a>. Then:</p>
+<pre><code>git clone https://github.com/mnicolee/Focus-Pocus.git
+cd Focus-Pocus
+npm install
+npm start</code></pre>
+      <p class="muted small">To try things out without touching your real data, use <code>npm run dev</code>. It writes to a separate test folder and fills it with fake sessions.</p>
+    </div></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Focus Pocus · MIT licence</span>
+    <a href="https://github.com/mnicolee/Focus-Pocus">Source on GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

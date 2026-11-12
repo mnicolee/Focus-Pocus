@@ -23,3 +23,6 @@ Thumbs.db
 
 # User data
 user_data/
+
+# Built website
+_site/
