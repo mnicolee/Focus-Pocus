@@ -5,6 +5,23 @@ All notable changes to Focus Pocus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3] - 2026-11-12
+
+### Added
+- **Sound warning**: a banner in the main window when your computer is muted or below 15% volume, with an Unmute / Turn up button
+- **Turn my sound on for alerts** (Settings, off by default): unmutes and raises the volume to 60% for an alert, then restores your previous sound when you press "Got it"
+- The taskbar button flashes on every alert
+- Choose where your data lives (defaults to `Documents/FocusPocus/`); real logs are no longer kept in the repo
+- `logs-sample/`: a made-up dataset for demos and testing
+
+### Changed
+- Blocklist nudges now come after 15 seconds on a blocked site, instead of 1 minute
+- Alert volume now climbs from 30% to 100%. Before, it stayed at 30% and only the number of beeps went up.
+- README rewritten; old v1.2 notes moved to `dev-tools/notes/`
+
+### Removed
+- Scroll detection (listed in 1.0) is officially dropped. It only saw scrolling inside the app window, and catching it everywhere would need a system-wide keyboard and mouse hook. Add scroll-heavy sites (reddit, instagram, tiktok…) to the distraction blocklist instead.
+
 ## [1.2] - 2026-01-08
 
 ### Added

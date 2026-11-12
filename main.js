@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, powerMonitor, dialog } = require('electron');
 const path = require('path');
 const activeWin = require('active-win');
+const { getAudio, setAudio } = require('./system-audio');
 
 let mainWindow;
 let statsWindow = null;
@@ -112,8 +113,18 @@ ipcMain.on('restore-and-focus-window', () => {
     mainWindow.focus();
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setAlwaysOnTop(true, 'floating');
+    // Flash the taskbar button too, so an alert is noticeable even with no sound
+    mainWindow.flashFrame(true);
   }
 });
+
+ipcMain.on('stop-flash', () => {
+  if (mainWindow) mainWindow.flashFrame(false);
+});
+
+// System speaker state: lets the renderer warn when alerts would be silent
+ipcMain.handle('audio-get', () => getAudio());
+ipcMain.handle('audio-set', (event, wanted) => setAudio(wanted));
 
 // Handle stats window
 ipcMain.on('show-stats-window', (event, statsData) => {

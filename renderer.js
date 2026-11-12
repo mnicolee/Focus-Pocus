@@ -31,10 +31,13 @@ let state = {
 let alertRepeatInterval = null;
 let currentAlertType = null;
 let currentBeepCount = 1;
+let alertRepeatIndex = 0;        // how many times the current alert has repeated unanswered
+let audioBeforeLoudMode = null;  // system sound state to restore after a loud-mode alert
+let audiblePending = Promise.resolve(); // loud-mode unmute in progress
 
 // Constants
 const ALERT_INTERVAL = 10 * 60 * 1000; // 10 minutes
-const DISTRACTION_DELAY = 1 * 60 * 1000; // 1 minute on a blocked site/app before nudging
+const DISTRACTION_DELAY = 15 * 1000; // 15 seconds on a blocked site/app before nudging
 const CHECK_INTERVAL = 1000; // Check every second
 
 // Efficiency rating emojis (0-100 in steps of 10)
@@ -113,6 +116,10 @@ const dataFolderInput = document.getElementById('dataFolderInput');
 const dataFolderBrowse = document.getElementById('dataFolderBrowse');
 const settingsSaveBtn = document.getElementById('settingsSaveBtn');
 const settingsCancelBtn = document.getElementById('settingsCancelBtn');
+const soundWarning = document.getElementById('soundWarning');
+const soundWarningText = document.getElementById('soundWarningText');
+const soundFixBtn = document.getElementById('soundFixBtn');
+const loudModeInput = document.getElementById('loudModeInput');
 
 // ---- Where Focus Pocus keeps its data (offline, in the user's Documents by default) ----
 // A tiny pointer file in the app's per-user config spot remembers which folder the user
@@ -410,6 +417,7 @@ function openSettings() {
   workingBlocklist = state.blocklist.slice();
   workingDataDir = dataDir;
   dataFolderInput.value = dataDir;
+  loudModeInput.checked = !!config.loudMode;
   renderBlocklist();
   blocklistModal.classList.add('show');
   blocklistInput.focus();
@@ -436,6 +444,12 @@ function saveSettings() {
     copyDataInto(oldLogsDir, oldBlocklistFile, logsDir, blocklistFile);
     config.dataDir = dataDir;
     config.migrated = true;
+    writeConfig();
+  }
+
+  // Alert sound
+  if (!!config.loudMode !== loudModeInput.checked) {
+    config.loudMode = loudModeInput.checked;
     writeConfig();
   }
 
@@ -523,6 +537,13 @@ async function updateAlertCountdown() {
   const systemIdleMs = systemIdleSeconds * 1000;
   const timeUntilAlert = state.inactivityThreshold - systemIdleMs;
 
+  // About 5 seconds before an inactivity alert, make sure it will be heard
+  if (timeUntilAlert > 0 && timeUntilAlert <= PRE_ALERT_CHECK_MS) {
+    if (!preAlertChecked.inactivity) { preAlertChecked.inactivity = true; checkSound(); }
+  } else if (timeUntilAlert > PRE_ALERT_CHECK_MS) {
+    preAlertChecked.inactivity = false;
+  }
+
   if (timeUntilAlert <= 0) {
     alertCountdown.textContent = 'Time to Alert: 00:00';
   } else {
@@ -576,7 +597,7 @@ async function checkActivity() {
     }
   }
 
-  // Check the active window against the user's distraction blocklist (1-min delay)
+  // Check the active window against the user's distraction blocklist (15-second delay)
   try {
     const activeWindow = await ipcRenderer.invoke('get-active-window');
     // What active-win can see on Windows: the window title + the owning app's
@@ -596,6 +617,12 @@ async function checkActivity() {
       } else {
         const distractionDuration = now - state.distractionDetectedAt;
 
+        // About 5 seconds before the nudge, make sure it will be heard
+        if (distractionDuration >= DISTRACTION_DELAY - PRE_ALERT_CHECK_MS && !preAlertChecked.distraction) {
+          preAlertChecked.distraction = true;
+          checkSound();
+        }
+
         if (distractionDuration >= DISTRACTION_DELAY) {
           // On a blocked site/app for 1+ minute, nudge if due
           if (!state.lastDistractionAlert || (now - state.lastDistractionAlert) > ALERT_INTERVAL) {
@@ -609,6 +636,7 @@ async function checkActivity() {
       // Nothing blocked in front, reset the timer
       state.distractionDetectedAt = null;
       state.lastDistractionMatch = null;
+      preAlertChecked.distraction = false;
     }
   } catch (error) {
     // Active-window detection not available, silently continue
@@ -618,11 +646,20 @@ async function checkActivity() {
 }
 
 // Play audio beep with different sounds for different alert types
+// Volume climbs from 30% to 100%: +15% each time an alert repeats unanswered,
+// +20% for each inactivity alert in a row you've ignored.
+function alertGain() {
+  const ignoredInARow = Math.max(0, (state.consecutiveInactivityAlerts || 1) - 1);
+  return Math.min(1, 0.3 + 0.15 * alertRepeatIndex + 0.2 * ignoredInARow);
+}
+
 function playBeep(type, beepCount = 1) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const gainNode = audioContext.createGain();
   gainNode.connect(audioContext.destination);
-  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume at 30%
+  gainNode.gain.setValueAtTime(alertGain(), audioContext.currentTime);
+  // Free the audio device once the beeps are done
+  setTimeout(() => audioContext.close().catch(() => {}), beepCount * 250 + 1000);
 
   if (type === 'inactivity') {
     // Multiple beeps (starts at 3, escalates each time ignored)
@@ -661,17 +698,99 @@ function showAlert(message, type = 'inactivity', beepCount = 1) {
   alertText.textContent = message;
   alertModal.classList.add('show');
 
-  // Play the first beep
-  playBeep(type, beepCount);
+  // Play the first beep (after making sure it can be heard, if loud mode is on)
+  alertRepeatIndex = 0;
+  audiblePending = ensureAudible();
+  audiblePending.finally(() => playBeep(type, beepCount));
 
-  // Request window to come to front
+  // Request window to come to front (also flashes the taskbar button)
   ipcRenderer.send('restore-and-focus-window');
 
-  // Set up repeating beep every 5 seconds until dismissed
+  // Repeat every 5 seconds until dismissed, a little louder each time
   alertRepeatInterval = setInterval(() => {
+    alertRepeatIndex++;
     playBeep(currentAlertType, currentBeepCount);
-  }, 5000); // Repeat every 5 seconds
+  }, 5000);
 }
+
+// ---------- System sound: warn when alerts would be silent ----------
+const QUIET_VOLUME = 0.15;   // below this we treat alerts as "probably not heard"
+const LOUD_MODE_VOLUME = 0.6;
+
+async function getSystemAudio() {
+  try { return await ipcRenderer.invoke('audio-get'); } catch (e) { console.error('[Sound] audio-get failed', e); return null; }
+}
+
+function isSilent(audio) {
+  return !!audio && (audio.muted || audio.volume < QUIET_VOLUME);
+}
+
+function showSoundState(audio) {
+  if (!audio) {           // unknown (not Windows, or the check failed): stay quiet
+    soundWarning.hidden = true;
+    return;
+  }
+  if (isSilent(audio)) {
+    soundWarningText.textContent = audio.muted
+      ? 'Your sound is muted, so alerts will be silent.'
+      : `Your volume is at ${Math.round(audio.volume * 100)}%, so alerts may be hard to hear.`;
+    soundFixBtn.textContent = audio.muted ? 'Unmute' : 'Turn up';
+    soundWarning.hidden = false;
+  } else {
+    soundWarning.hidden = true;
+  }
+}
+
+// Sound is checked only when the app opens and about 5 seconds before an
+// alert goes off (see updateAlertCountdown and checkActivity).
+async function checkSound() {
+  showSoundState(await getSystemAudio());
+}
+const PRE_ALERT_CHECK_MS = 5000;
+let preAlertChecked = { inactivity: false, distraction: false };
+
+soundFixBtn.addEventListener('click', async () => {
+  soundWarning.hidden = true; // respond instantly; the call below takes about a second
+  const wasLow = soundFixBtn.textContent === 'Turn up';
+  const after = await ipcRenderer.invoke('audio-set', { muted: false, volume: wasLow ? 0.5 : undefined });
+  showSoundState(after);
+});
+
+// Loud mode: if the computer is muted or very quiet when an alert fires,
+// unmute and turn it up, remembering the old state to restore on "Got it".
+async function ensureAudible() {
+  if (!config.loudMode || audioBeforeLoudMode) return;
+  const audio = await getSystemAudio();
+  if (!isSilent(audio)) return;
+  audioBeforeLoudMode = audio;
+  await ipcRenderer.invoke('audio-set', {
+    muted: false,
+    volume: Math.max(audio.volume, LOUD_MODE_VOLUME)
+  });
+}
+
+async function restoreAudioAfterAlert() {
+  await audiblePending.catch(() => {}); // a fast "Got it" waits for the unmute to finish first
+  if (!audioBeforeLoudMode) return;
+  const before = audioBeforeLoudMode;
+  audioBeforeLoudMode = null;
+  await ipcRenderer.invoke('audio-set', { volume: before.volume, muted: before.muted });
+}
+
+// Check once when the app opens
+checkSound();
+
+// While the warning is up, re-check when you come back to the window (hover or
+// click), so it clears soon after you unmute from Windows. No background polling.
+let lastSoundRecheck = 0;
+function recheckSoundIfWarning() {
+  if (soundWarning.hidden || Date.now() - lastSoundRecheck < 3000) return;
+  lastSoundRecheck = Date.now();
+  checkSound();
+}
+document.addEventListener('mouseenter', recheckSoundIfWarning);
+document.addEventListener('mousemove', recheckSoundIfWarning);
+window.addEventListener('focus', recheckSoundIfWarning);
 
 // Load and display sessions for selection
 function loadSessionSelectionModal() {
@@ -987,6 +1106,7 @@ startBtn.addEventListener('click', () => {
   // Disable kill-all button when starting new session
   killAllBtn.disabled = true;
 
+
   statusText.textContent = 'Working...';
   updateButtonStates('running');
 
@@ -1193,6 +1313,9 @@ closeModal.addEventListener('click', () => {
 // Dismiss alert
 dismissAlert.addEventListener('click', () => {
   alertModal.classList.remove('show');
+  ipcRenderer.send('stop-flash');
+  alertRepeatIndex = 0;
+  restoreAudioAfterAlert();
 
   // Stop the repeating beep
   if (alertRepeatInterval) {

@@ -1028,3 +1028,63 @@ body {
 .settings-save-btn:hover {
   background: #5568d3;
 }
+
+/* Sound warning: shown when alerts would be silent (muted or very low volume) */
+[hidden] {
+  display: none !important;
+}
+
+.sound-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 15px 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffcf8a;
+  background: rgba(255, 170, 60, 0.12);
+  border: 1px solid rgba(255, 170, 60, 0.45);
+  border-radius: 6px;
+}
+
+.sound-warning span {
+  flex: 1;
+}
+
+.sound-fix-btn {
+  padding: 4px 10px;
+  font: 600 12px 'IBM Plex Sans', sans-serif;
+  color: #000;
+  background: #ffcf8a;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sound-fix-btn:hover {
+  background: #ffe0b0;
+}
+
+.loud-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a8c5e6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.loud-mode-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #a8c5e6;
+}
+
+/* The window is a fixed size: while the sound warning shows, it takes the
+   last-session message's spot instead of pushing the buttons off the bottom. */
+.sound-warning:not([hidden]) + .last-session-display {
+  display: none !important;
+}

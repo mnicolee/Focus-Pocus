@@ -24,5 +24,6 @@ Thumbs.db
 # User data
 user_data/
 
-# Built website
-_site/
+
+# Private notes (personal dates, never pushed)
+private-notes.md

@@ -2,7 +2,7 @@
 //
 // Focus Pocus never uses this in normal operation: your real sessions live in
 // Documents/FocusPocus. This folder is only a reference dataset, e.g. for
-// regenerating the portfolio dashboard when no real logs are present, or for
+// making README screenshots, or for
 // exercising the UI without touching real data.
 //
 // Re-run any time to reshuffle:  node dev-tools/make-sample-data.js
