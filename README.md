@@ -16,11 +16,44 @@
 - 🔥 **Asks how it went.** When you stop, rate the session from 😢 to 🔥.
 - 📊 **Shows you the trend.** Daily, weekly and monthly stats, with your rating next to the measured efficiency.
 
+## 🚀 Get started
+
+### Step 1: Install Node.js
+
+Download and install the **LTS version** of [Node.js](https://nodejs.org/), because Focus Pocus needs it to run.
+
+### Step 2: Download and open Focus Pocus
+
+Open a terminal and paste this in:
+
+```bash
+git clone https://github.com/mnicolee/Focus-Pocus.git
+cd Focus-Pocus
+npm install
+npm start
+```
+
+After the first time, you can open it again with `npm start`, or on Windows just double-click **`Start Focus Pocus.bat`**.
+
+### Step 3: Choose where your data is saved
+
+Click ⚙️ in the top corner and pick a folder under **Where your data is kept**, or leave it on the default `Documents/FocusPocus/`.
+
+<img src="docs/settings-data-folder.png" width="360" alt="Settings window showing the Where your data is kept folder picker">
+
+### Step 4: Add your distractions
+
+In the same ⚙️ Settings window, scroll down to **Distraction blocklist** and add the sites and apps you drift off to (like `youtube`, `tiktok` or `netflix`), because Focus Pocus can only nudge you about the ones it knows about. Press **Save** when you're done.
+
+<img src="docs/settings-blocklist.png" width="360" alt="Settings window showing the distraction blocklist with youtube added">
+
+That's it, so press start and get to work! If you'd rather have a standalone `.exe`, run `npm run build` and you'll find it in `dist/`.
+
 ## How your data is kept
 
 Your sessions, your blocklist and the folder you want the logs at are **never** uploaded anywhere.
 
-**Pick where your data goes** in ⚙️ Settings under **Where your data is kept**. By default it's `Documents/FocusPocus/`, which holds a `logs/` folder (one file per day of sessions) and `blacklist.json` (your blocklist).
+You choose the folder in ⚙️ Settings (see [Step 3](#step-3-choose-where-your-data-is-saved)). By default it's `Documents/FocusPocus/`, which holds a `logs/` folder (one file per day of sessions) and `blacklist.json` (your blocklist).
 
 If you choose a folder **inside this repo**, add its name to `.gitignore` before you commit anything, so your personal logs never get pushed to GitHub. The repo already ignores `logs/` and `logs-dev/`, and the only sessions it ships are the **made-up** ones in `logs-sample/`.
 
@@ -33,23 +66,6 @@ Click **Daily**, **Weekly** or **Monthly** in the main window. Here's the weekly
 **Measured efficiency** counts each alert as 10 lost minutes: focus time ÷ (focus time + alerts × 10 min).
 
 If you want to see what the stats look like before you have sessions of your own, run `npm run dev`, since dev mode uses a separate `logs-dev/` folder of fake sessions and never touches your real data.
-
-## Run it
-
-You'll need [Node.js](https://nodejs.org/) (the LTS version).
-
-```bash
-git clone https://github.com/mnicolee/Focus-Pocus.git
-cd Focus-Pocus
-npm install
-npm start
-```
-
-On Windows you can also double-click **`Start Focus Pocus.bat`**.
-
-Once it's open, go to ⚙️ Settings and **add your distractions to the blocklist** (like `youtube`, `tiktok` or `netflix`), because Focus Pocus can only nudge you about the sites and apps it knows about.
-
-To build a standalone `.exe` in `dist/`, run `npm run build`.
 
 ## Troubleshooting
 
