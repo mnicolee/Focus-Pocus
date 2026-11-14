@@ -10,7 +10,7 @@
   },
   "keywords": ["productivity", "timer", "pomodoro"],
   "author": "",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "build": {
     "appId": "com.focuspocus.app",
     "productName": "Focus Pocus",

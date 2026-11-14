@@ -18,28 +18,11 @@
 
 ## How your data is kept
 
-**Your sessions never leave your computer.** Nothing is uploaded.
+Your sessions, your blocklist and the folder you want the logs at are **never** uploaded anywhere.
 
-| Where | What |
-|---|---|
-| `Documents/FocusPocus/logs/` | Your sessions, one file per day (you can move this folder in ⚙️ Settings) |
-| `Documents/FocusPocus/blacklist.json` | Your blocklist |
-| `logs-sample/` in this repo | **Made-up** sessions for demos and testing |
+**Pick where your data goes** in ⚙️ Settings under **Where your data is kept**. By default it's `Documents/FocusPocus/`, which holds a `logs/` folder (one file per day of sessions) and `blacklist.json` (your blocklist).
 
-Each session records when it ended, the focus time, the break count and total break time, the number of alerts and your rating:
-
-```json
-{
-  "timestamp": "2026-01-10T10:57:31.000Z",
-  "focusTime": 12511849,
-  "procrastinationCount": 1,
-  "pauseCount": 2,
-  "pauseTime": 1974996,
-  "efficiencyRating": 84
-}
-```
-
-Times are in milliseconds. A session is filed under the day it **ended**, so one that runs past midnight is filed under the next day.
+If you choose a folder **inside this repo**, add its name to `.gitignore` before you commit anything, so your personal logs never get pushed to GitHub. The repo already ignores `logs/` and `logs-dev/`, and the only sessions it ships are the **made-up** ones in `logs-sample/`.
 
 ## Stats
 
@@ -48,6 +31,8 @@ Click **Daily**, **Weekly** or **Monthly** in the main window. Here's the weekly
 <img src="docs/stats-weekly-sample.png" width="360" alt="Weekly statistics window showing sessions, focus time, alerts, pauses and efficiency">
 
 **Measured efficiency** counts each alert as 10 lost minutes: focus time ÷ (focus time + alerts × 10 min).
+
+If you want to see what the stats look like before you have sessions of your own, run `npm run dev`, since dev mode uses a separate `logs-dev/` folder of fake sessions and never touches your real data.
 
 ## Run it
 
@@ -62,17 +47,9 @@ npm start
 
 On Windows you can also double-click **`Start Focus Pocus.bat`**.
 
+Once it's open, go to ⚙️ Settings and **add your distractions to the blocklist** (like `youtube`, `tiktok` or `netflix`), because Focus Pocus can only nudge you about the sites and apps it knows about.
+
 To build a standalone `.exe` in `dist/`, run `npm run build`.
-
-### Dev mode
-
-```bash
-npm run dev
-```
-
-Dev mode uses a separate `logs-dev/` folder filled with fake sessions, so it never touches your real data. More in [`dev-tools/`](dev-tools/README.md).
-
-To reshuffle the sample dataset, run `node dev-tools/make-sample-data.js`.
 
 ## Troubleshooting
 
@@ -80,18 +57,6 @@ To reshuffle the sample dataset, run `node dev-tools/make-sample-data.js`.
 - **Blocklist not catching a site?** Focus Pocus matches the words in the window title. Use the name as it appears in the browser tab (e.g. `youtube`, not `youtu.be`).
 - **Stats show N/A for your rating?** You haven't rated a session in that period yet.
 
-More help: [`dev-tools/TROUBLESHOOTING.md`](dev-tools/TROUBLESHOOTING.md). Older notes from v1.2 are in [`dev-tools/notes/`](dev-tools/notes/).
+## Licence
 
-## Project layout
-
-```
-main.js            Electron main process (window, idle time, system sound)
-renderer.js        The app: timer, alerts, stats, settings
-system-audio.js    Reads/sets Windows volume and mute for the sound warning
-index.html         Main window       stats.html  Stats window
-logs-sample/       Made-up sessions (safe to share)
-dev-tools/         Dev mode helpers, sample-data generator, old notes
-docs/              Images used in this README
-```
-
-MIT licence. See [CHANGELOG.md](CHANGELOG.md) for what changed.
+Apache 2.0. See [LICENSE](LICENSE).

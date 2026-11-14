@@ -27,3 +27,6 @@ user_data/
 
 # Private notes (personal dates, never pushed)
 private-notes.md
+
+# Private analysis of my real logs (blog figures); only the images go to Portfolio
+analysis/

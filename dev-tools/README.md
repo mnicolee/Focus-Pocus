@@ -17,7 +17,6 @@ QUICK_TEST.bat
 
 ### Documentation
 - **DEV_MODE_GUIDE.md** - How to use dev mode
-- **TROUBLESHOOTING.md** - Step-by-step debugging guide
 - **TEST_DEV_MODE.md** - Manual testing checklist
 - **FIXES_SUMMARY.md** - Summary of all bug fixes in v1.2
 
@@ -39,7 +38,3 @@ dev-tools\QUICK_TEST.bat
 - Title turns RED: "Focus Pocus (DEV VERSION)"
 - Auto-generates fake session data
 - Opens DevTools automatically for debugging
-
-## Need Help?
-
-See **TROUBLESHOOTING.md** for detailed debugging steps.
